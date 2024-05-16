@@ -21,7 +21,7 @@ sounds:
   volume: 2
   pitch: 1
 ```
-# Depends on:
+# Dependencies:
 ```yml
 depend: [ViaVersion]
 softdepend: [PlaceholderAPI]
