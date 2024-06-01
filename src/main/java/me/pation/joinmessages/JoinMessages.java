@@ -17,7 +17,7 @@ public final class JoinMessages extends JavaPlugin {
 
         getCommand("joinMessages").setExecutor(new MainCommand(this));
 
-        saveResource("config.yml", /* replace */ false);
+        saveDefaultConfig();
     }
 
     @Override

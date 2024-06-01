@@ -3,7 +3,6 @@ package me.pation.joinmessages.listeners;
 import com.viaversion.viaversion.api.Via;
 import com.viaversion.viaversion.api.ViaAPI;
 import me.clip.placeholderapi.PlaceholderAPI;
-import me.pation.joinmessages.JoinMessages;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.title.Title;
@@ -15,6 +14,12 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 
+import me.pation.joinmessages.JoinMessages;
+import me.pation.joinmessages.utils.GetAvatar;
+
+import java.io.IOException;
+import java.util.UUID;
+
 public class JoinListener implements Listener {
 
     private final JoinMessages plugin;
@@ -24,12 +29,13 @@ public class JoinListener implements Listener {
     }
 
     @EventHandler (priority = EventPriority.LOWEST)
-    public void onPlayerJoin(PlayerJoinEvent event) {
+    public void onPlayerJoin(PlayerJoinEvent event) throws IOException {
 
         // Get from config
         String joinMsg = this.plugin.getConfig().getString("messages.join");
 
         String mainTitle = this.plugin.getConfig().getString("titles.main");
+
         String supportedVer = this.plugin.getConfig().getString("titles.supported-version");
         String oldVer = this.plugin.getConfig().getString("titles.old-version");
 
@@ -42,6 +48,15 @@ public class JoinListener implements Listener {
         if (joinMsg != null) {
             joinMsg = PlaceholderAPI.setPlaceholders(event.getPlayer(), joinMsg);
             event.joinMessage(MiniMessage.miniMessage().deserialize(joinMsg));
+        }
+
+        boolean on = this.plugin.getConfig().getBoolean("motd.display");
+
+        // MessageOfTheDay
+        if (on) {
+            UUID uuid = event.getPlayer().getUniqueId();
+            GetAvatar PlayerMessage = new GetAvatar(this.plugin);
+            event.getPlayer().sendMessage(MiniMessage.miniMessage().deserialize(PlaceholderAPI.setPlaceholders(event.getPlayer(), PlayerMessage.processImage(uuid))));
         }
 
         // Titles
