@@ -9,6 +9,7 @@
 # Config:
 ```yml
 titles:
+  enabled: true
   # Main title animation change time in ms
   delay: 500
   # you can do only one too
