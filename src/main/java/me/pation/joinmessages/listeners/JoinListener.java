@@ -1,11 +1,7 @@
 package me.pation.joinmessages.listeners;
 
-import com.viaversion.viaversion.api.Via;
-import com.viaversion.viaversion.api.ViaAPI;
 import me.clip.placeholderapi.PlaceholderAPI;
-import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
-import net.kyori.adventure.title.Title;
 import org.bukkit.Bukkit;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
@@ -16,6 +12,7 @@ import org.bukkit.event.player.PlayerJoinEvent;
 
 import me.pation.joinmessages.JoinMessages;
 import me.pation.joinmessages.utils.GetAvatar;
+import me.pation.joinmessages.utils.TitleAnimation;
 
 import java.io.IOException;
 import java.util.UUID;
@@ -32,17 +29,10 @@ public class JoinListener implements Listener {
     public void onPlayerJoin(PlayerJoinEvent event) throws IOException {
 
         // Get from config
+        boolean soundEnabled = this.plugin.getConfig().getBoolean("sounds.enabled");
+        boolean motdEnabled = this.plugin.getConfig().getBoolean("motd.enabled");
+
         String joinMsg = this.plugin.getConfig().getString("messages.join");
-
-        String mainTitle = this.plugin.getConfig().getString("titles.main");
-
-        String supportedVer = this.plugin.getConfig().getString("titles.supported-version");
-        String oldVer = this.plugin.getConfig().getString("titles.old-version");
-
-        Sound sound = Sound.valueOf(this.plugin.getConfig().getString("sounds.sound"));
-        int volume = this.plugin.getConfig().getInt("sounds.volume");
-        int pitch = this.plugin.getConfig().getInt("sounds.pitch");
-        boolean global = this.plugin.getConfig().getBoolean("sounds.global");
 
         // Join message
         if (joinMsg != null) {
@@ -50,39 +40,40 @@ public class JoinListener implements Listener {
             event.joinMessage(MiniMessage.miniMessage().deserialize(joinMsg));
         }
 
-        boolean on = this.plugin.getConfig().getBoolean("motd.display");
+        // Title
+        TitleAnimation animation = new TitleAnimation(this.plugin);
+        Bukkit.getScheduler().runTask(this.plugin, () -> {
+            animation.animation(event.getPlayer());
+        });
 
         // MessageOfTheDay
-        if (on) {
+        if (motdEnabled) {
             UUID uuid = event.getPlayer().getUniqueId();
             GetAvatar PlayerMessage = new GetAvatar(this.plugin);
-            event.getPlayer().sendMessage(MiniMessage.miniMessage().deserialize(PlaceholderAPI.setPlaceholders(event.getPlayer(), PlayerMessage.processImage(uuid))));
+            Bukkit.getScheduler().runTaskAsynchronously(this.plugin, () -> {
+                try {
+                    event.getPlayer().sendMessage(MiniMessage.miniMessage().deserialize(PlaceholderAPI.setPlaceholders(event.getPlayer(), PlayerMessage.processImage(uuid, event.getPlayer().getName()))));
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            });
         }
-
-        // Titles
-        Component title = MiniMessage.miniMessage().deserialize(mainTitle);
-        Component subtitle = MiniMessage.miniMessage().deserialize(supportedVer);
-
-        // Get version from ViaVersion
-        ViaAPI api = Via.getAPI();
-        int version = api.getPlayerProtocolVersion(event.getPlayer()).getVersion();
-        int serverVer = api.getServerVersion().highestSupportedProtocolVersion().getVersion();
-
-        // Compare versions
-        if (version < serverVer) {
-            subtitle = MiniMessage.miniMessage().deserialize(oldVer);
-        }
-
-        Title wholeTitle = Title.title(title, subtitle);
-        event.getPlayer().showTitle(wholeTitle);
 
         // Join sound
-        if (global) {
-            for (Player player : Bukkit.getServer().getOnlinePlayers()) {
-                player.playSound(player.getLocation(), sound, volume, pitch);
+        if (soundEnabled){
+            boolean global = this.plugin.getConfig().getBoolean("sounds.global");
+
+            Sound sound = Sound.valueOf(this.plugin.getConfig().getString("sounds.sound"));
+            int volume = this.plugin.getConfig().getInt("sounds.volume");
+            int pitch = this.plugin.getConfig().getInt("sounds.pitch");
+
+            if (global){
+                for (Player player : Bukkit.getServer().getOnlinePlayers()) {
+                    player.playSound(player.getLocation(), sound, volume, pitch);
+                }
+                return;
             }
-            return;
+            event.getPlayer().playSound(event.getPlayer().getLocation(), sound, volume, pitch);
         }
-        event.getPlayer().playSound(event.getPlayer().getLocation(), sound, volume, pitch);
     }
 }

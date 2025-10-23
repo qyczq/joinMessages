@@ -17,10 +17,10 @@ public class GetAvatar {
         this.plugin = plugin;
     }
 
-    public String processImage(UUID uuid) throws IOException {
+    public String processImage(UUID uuid, String playername) throws IOException {
         String PlayerMessage = "";
 
-        URL url = new URL(this.plugin.getConfig().getString("motd.api").replace("%%uuid%%", uuid.toString()));
+        URL url = new URL(this.plugin.getConfig().getString("motd.api").replace("%uuid%", uuid.toString()).replace("%nick%", playername));
         BufferedImage image = ImageIO.read(url);
         List<?> r = this.plugin.getConfig().getList("motd.lines");
 

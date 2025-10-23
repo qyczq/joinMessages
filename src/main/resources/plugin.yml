@@ -2,8 +2,7 @@ name: joinMessages
 version: '${project.version}'
 main: me.pation.joinmessages.JoinMessages
 api-version: '1.20'
-depend: [ViaVersion]
-softdepend: [PlaceholderAPI]
+softdepend: [PlaceholderAPI, ViaVersion]
 commands:
   joinMessages:
     description: "Reloads joinMessages config file."
